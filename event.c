@@ -206,6 +206,7 @@ timeToSleep(struct timeval *time)
     }
 }
 
+#ifndef IPROXY
 static TimeEventHandlerPtr
 enqueueTimeEvent(TimeEventHandlerPtr event)
 {
@@ -296,6 +297,7 @@ cancelTimeEvent(TimeEventHandlerPtr event)
         event->previous->next = event->next;
     free(event);
 }
+#endif
 
 int
 allocateFdEventNum(int fd)
@@ -378,6 +380,7 @@ makeFdEvent(int fd, int poll_events,
     return event;
 }
 
+#ifndef IPROXY
 FdEventHandlerPtr
 registerFdEventHelper(FdEventHandlerPtr event)
 {
@@ -407,6 +410,7 @@ registerFdEventHelper(FdEventHandlerPtr event)
 
     return event;
 }
+#endif
 
 FdEventHandlerPtr 
 registerFdEvent(int fd, int poll_events, 
@@ -827,8 +831,10 @@ signalCondition(ConditionPtr condition)
     in_signalCondition--;
 }
 
+#ifndef IPROXY
 void
 polipoExit()
 {
     exitFlag = 3;
 }
+#endif
