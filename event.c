@@ -380,6 +380,7 @@ makeFdEvent(int fd, int poll_events,
     return event;
 }
 
+#ifndef IPROXY
 FdEventHandlerPtr
 registerFdEventHelper(FdEventHandlerPtr event)
 {
@@ -409,6 +410,7 @@ registerFdEventHelper(FdEventHandlerPtr event)
 
     return event;
 }
+#endif
 
 FdEventHandlerPtr 
 registerFdEvent(int fd, int poll_events, 
