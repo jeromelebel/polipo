@@ -339,6 +339,7 @@ allocateFdEventNum(int fd)
     return i;
 }
 
+#ifndef IPROXY
 void
 deallocateFdEventNum(int i)
 {
@@ -353,6 +354,7 @@ deallocateFdEventNum(int i)
     fdEventNum--;
     fds_invalid = 1;
 }
+#endif
 
 FdEventHandlerPtr 
 makeFdEvent(int fd, int poll_events, 
@@ -425,6 +427,7 @@ registerFdEvent(int fd, int poll_events,
     return registerFdEventHelper(event);
 }
 
+#ifndef IPROXY
 static int
 recomputePollEvents(FdEventHandlerPtr event) 
 {
@@ -498,6 +501,7 @@ runTimeEventQueue()
         free(event);
     }
 }
+#endif
 
 static FdEventHandlerPtr
 findEventHelper(int revents, FdEventHandlerPtr events)
@@ -623,6 +627,7 @@ workToDo()
     return(rc >= 1);
 }
     
+#ifndef IPROXY
 void
 eventLoop()
 {
@@ -729,6 +734,7 @@ eventLoop()
         }
     }
 }
+#endif
 
 void
 initCondition(ConditionPtr condition)
