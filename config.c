@@ -405,7 +405,9 @@ printConfigVariables(FILE *out, int html)
 
       fprintf(out, html ? "<br/>" : " "); 
       
-      fprintf(out, html ? "<i>" : "");    
+      if (html) {
+          fprintf(out, "<i>");
+      }
       
       switch(var->type) {
       case CONFIG_INT: case CONFIG_OCTAL: case CONFIG_HEX:
@@ -424,7 +426,9 @@ printConfigVariables(FILE *out, int html)
       default: abort();
       }
         
-      fprintf(out, html ? "</i>" : "");
+      if (html) {
+          fprintf(out, "</i>");
+      }
 
       PRINT_SEP();
 
@@ -701,7 +705,7 @@ parseConfigLine(char *line, char *filename, int lineno, int set)
     case CONFIG_FLOAT: 
         if(!digit(line[i]) && line[i] != '.')
             goto syntax;
-        fv = atof(line + i);
+        fv = strtof(line + i, NULL);
         if(set)
             var->setter(var, &fv);
         else

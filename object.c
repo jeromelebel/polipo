@@ -39,7 +39,7 @@ int publicObjectLowMark = 0, objectHighMark = 2048;
 static ObjectPtr *objectHashTable;
 int maxExpiresAge = (30 * 24 + 1) * 3600;
 int maxAge = (14 * 24 + 1) * 3600;
-float maxAgeFraction = 0.1;
+float maxAgeFraction = (float)0.1;
 int maxNoModifiedAge = 23 * 60;
 int maxWriteoutWhenIdle = 64 * 1024;
 int maxObjectsWhenIdle = 32;
