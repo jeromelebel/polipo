@@ -501,6 +501,8 @@ runTimeEventQueue()
         free(event);
     }
 }
+#else
+void unregisterFdEventI(FdEventHandlerPtr event, int i);
 #endif
 
 static FdEventHandlerPtr
