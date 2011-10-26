@@ -47,6 +47,7 @@ httpAccept(int fd, FdEventHandlerPtr event, AcceptRequestPtr request)
     HTTPConnectionPtr connection;
     TimeEventHandlerPtr timeout;
 
+    printf("httpAccept socket %d event %p request %p\n", fd, event, request);
     if(fd < 0) {
         if(-fd == EINTR || -fd == EAGAIN || -fd == EWOULDBLOCK)
             return 0;
@@ -363,6 +364,7 @@ httpClientHandler(int status,
     int bufsize = 
         (connection->flags & CONN_BIGREQBUF) ? bigBufferSize : CHUNK_SIZE;
 
+    printf("httpClientHandler status %d event %p request %p\n", status, event, request);
     assert(connection->flags & CONN_READER);
 
     /* There's no point trying to do something with this request if
@@ -1040,6 +1042,7 @@ httpClientDelayed(TimeEventHandlerPtr event)
 {
      HTTPConnectionPtr connection = *(HTTPConnectionPtr*)event->data;
 
+    printf("httpClientDelayed event %p\n", event);
      /* IO_NOTNOW is unfortunate, but needed to avoid starvation if a
         client is pipelining a lot of requests. */
      if(connection->reqlen > 0) {

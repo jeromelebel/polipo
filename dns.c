@@ -268,6 +268,7 @@ do_gethostbyname(char *origname,
     GethostbynameRequestRec request;
     int done, rc;
 
+    printf("do_gethostbyname %s\n", origname);
     memset(&request, 0, sizeof(request));
     request.name = NULL;
     request.addr = NULL;

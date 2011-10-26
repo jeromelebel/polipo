@@ -22,6 +22,31 @@ THE SOFTWARE.
 
 #include "polipo.h"
 
+#ifdef IPROXY
+//#define IPROXY_SOCKET
+void iproxyClose(int nativeSocket);
+#undef CLOSE
+#define CLOSE(x) { iproxyClose(x); printf("zob\n"); }
+#else
+#undef CLOSE
+#define CLOSE(x) { close(x); printf("zob\n"); }
+#endif
+
+#ifdef IPROXY_SOCKET
+size_t iproxyWrite(int nativeSocket, void *bytes, size_t length);
+size_t iproxyRead(int nativeSocket, void *bytes, size_t length);
+size_t iproxyWritev(int nativeSocket, const struct iovec *iov, int iovcnt);
+size_t iproxyReadv(int nativeSocket, const struct iovec *iov, int iovcnt);
+#undef WRITE
+#define WRITE iproxyWrite
+#undef READ
+#define READ iproxyWrite
+#undef WRITEV
+#define WRITEV iproxyWritev
+#undef READV
+#define READV iproxyReadv
+#endif
+
 #ifdef HAVE_IPv6
 #ifdef IPV6_PREFER_TEMPADDR
 #define HAVE_IPV6_PREFER_TEMPADDR 1
@@ -147,7 +172,7 @@ chunkHeader(char *buf, int buflen, int i)
     return n;
 }
 
-
+static int schedule_stream_count = 0;
 FdEventHandlerPtr
 schedule_stream(int operation, int fd, int offset,
                 char *header, int hlen,
@@ -195,6 +220,7 @@ schedule_stream(int operation, int fd, int offset,
                         POLLOUT : POLLIN, 
                         do_scheduled_stream, 
                         sizeof(StreamRequestRec), &request);
+    printf("schedule_stream(%d) socket %d event %p\n", schedule_stream_count++, fd, event);
     if(!event) {
         done = (*handler)(-ENOMEM, NULL, &request);
         assert(done);
@@ -202,14 +228,18 @@ schedule_stream(int operation, int fd, int offset,
     }
 
     if(!(operation & IO_NOTNOW)) {
+        printf("\tschedule_stream now\n");
         done = event->handler(0, event);
         if(done) {
             free(event);
             return NULL;
         }
-    } 
+    } else {
+        printf("\tschedule_stream not now\n");
+    }
 
     if(operation & IO_IMMEDIATE) {
+        printf("\tschedule_stream immediate\n");
         assert(hlen == 0 && !(operation & IO_CHUNKED));
         done = (*handler)(0, event, &request);
         if(done) {
@@ -218,11 +248,13 @@ schedule_stream(int operation, int fd, int offset,
         }
     }
     event = registerFdEventHelper(event);
+    printf("\tregister event for socket %d\n", fd);
     return event;
 }
 
 static const char *endChunkTrailer = "\r\n0\r\n\r\n";
 
+static int do_scheduled_stream_count = 0;
 int
 do_scheduled_stream(int status, FdEventHandlerPtr event)
 {
@@ -236,6 +268,7 @@ do_scheduled_stream(int status, FdEventHandlerPtr event)
         request->len + request->len2 + 
         ((request->operation & IO_BUF3) ? request->u.b.len3 : 0);
 
+    printf("do_scheduled_stream(%d) status %d event %p\n", do_scheduled_stream_count++, status, event);
     if(status) {
         done = request->handler(status, event, request);
         return done;
@@ -353,11 +386,13 @@ do_scheduled_stream(int status, FdEventHandlerPtr event)
             rc = WRITEV(request->fd, iov, i);
         else
             rc = WRITE(request->fd, iov[0].iov_base, iov[0].iov_len);
+        printf("write socket %d length %d\n", request->fd, rc);
     } else {
         if(i > 1) 
             rc = READV(request->fd, iov, i);
         else
             rc = READ(request->fd, iov[0].iov_base, iov[0].iov_len);
+        printf("read socket %d length %d errno %d\n", request->fd, rc, errno);
     }
 
     if(rc > 0) {
@@ -441,6 +476,7 @@ serverSocket(int af)
 
 #endif
     }
+    printf("serverSocket fd %d\n", fd);
     return fd;
 }
 
@@ -456,6 +492,7 @@ do_connect(AtomPtr addr, int index, int port,
     assert(addr->length > 0 && addr->string[0] == DNS_A);
     assert(addr->length % sizeof(HostAddressRec) == 1);
 
+    printf("do_connect %s:%d\n", addr->string, port);
     if(index >= (addr->length - 1)/ sizeof(HostAddressRec))
         index = 0;
 
@@ -517,6 +554,7 @@ do_scheduled_connect(int status, FdEventHandlerPtr event)
     struct sockaddr_in6 servaddr6;
 #endif
 
+    printf("do_scheduled_connect status %d event %p addr %p\n", status, event, addr);
     assert(addr->length > 0 && addr->string[0] == DNS_A);
     assert(addr->length % sizeof(HostAddressRec) == 1);
     assert(request->index < (addr->length - 1) / sizeof(HostAddressRec));
@@ -565,6 +603,7 @@ do_scheduled_connect(int status, FdEventHandlerPtr event)
         }
         request->af = host->af;
     }
+    printf("connect with socket %d\n", request->fd);
     switch(host->af) {
     case 4:
         memset(&servaddr, 0, sizeof(servaddr));
@@ -590,6 +629,7 @@ do_scheduled_connect(int status, FdEventHandlerPtr event)
     default:
         abort();
     }
+    printf("connect event %p, request %p, socket %d, rc %d, errno %d\n", event, request, request->fd, rc, errno);
         
     if(rc >= 0 || errno == EISCONN) {
         done = request->handler(1, event, request);

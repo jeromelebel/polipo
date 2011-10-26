@@ -170,6 +170,7 @@ do_socks_connect(char *name, int port,
     if(request == NULL)
         goto nomem;
 
+    printf("do_socks_connect %s:%d\n", name, port);
     request->name = internAtomLowerN(name, strlen(name));
     if(request->name == NULL) {
         free(request);

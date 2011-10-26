@@ -247,8 +247,11 @@ enqueueTimeEvent(TimeEventHandlerPtr event)
         }
         otherevent->previous = event;
     }
+  printf("schedule time event %p\n", event);
     return event;
 }
+
+static int scheduleTimeEvent_count = 0;
 
 TimeEventHandlerPtr
 scheduleTimeEvent(int seconds,
@@ -281,12 +284,14 @@ scheduleTimeEvent(int seconds,
     else if(dsize > 0)
         memcpy(event->data, data, dsize);
 
+    printf("scheduleTimeEvent(%d) event %p\n", scheduleTimeEvent_count++, event);
     return enqueueTimeEvent(event);
 }
 
 void
 cancelTimeEvent(TimeEventHandlerPtr event)
 {
+    printf("cancelTimeEvent event %p\n", event);
     if(event == timeEventQueue)
         timeEventQueue = event->next;
     if(event == timeEventQueueLast)
@@ -383,12 +388,21 @@ makeFdEvent(int fd, int poll_events,
 }
 
 #ifndef IPROXY
+static int registerFdEventHelper_count = -1;
+
 FdEventHandlerPtr
 registerFdEventHelper(FdEventHandlerPtr event)
 {
     int i;
     int fd = event->fd;
 
+    printf("registerFdEventHelper(%d) %p\n", registerFdEventHelper_count++, event);
+    if (event->poll_events & POLLIN) {
+        printf("\tread\n");
+    }
+    if (event->poll_events & POLLOUT) {
+        printf("\twrite\n");
+    }
     for(i = 0; i < fdEventNum; i++)
         if(poll_fds[i].fd == fd)
             break;
@@ -444,6 +458,7 @@ unregisterFdEventI(FdEventHandlerPtr event, int i)
 {
     assert(i < fdEventNum && poll_fds[i].fd == event->fd);
 
+    printf("unregister event %p i %d\n", event, i);
     if(fdEvents[i] == event) {
         assert(!event->previous);
         fdEvents[i] = event->next;
@@ -722,6 +737,7 @@ eventLoop()
                 if(!event)
                     continue;
                 done = event->handler(0, event);
+                printf("event %p done %d\n", event, done);
                 if(done) {
                     if(fds_invalid)
                         unregisterFdEvent(event);

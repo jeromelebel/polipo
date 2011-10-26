@@ -493,6 +493,7 @@ httpServerConnection(HTTPServerPtr server)
     HTTPConnectionPtr connection;
     int i;
 
+    printf("httpServerConnection %p\n", server);
     connection = httpMakeConnection();
     if(connection == NULL) {
         do_log(L_ERROR, "Couldn't allocate server connection.\n");
@@ -532,6 +533,7 @@ httpServerConnectionDnsHandler(int status, GethostbynameRequestPtr request)
 {
     HTTPConnectionPtr connection = request->data;
 
+    printf("httpServerConnectionDnsHandler status %d request %p\n", status, request);
     httpSetTimeout(connection, -1);
 
     if(status <= 0) {
@@ -590,6 +592,7 @@ httpServerConnectionHandler(int status,
 {
     HTTPConnectionPtr connection = request->data;
 
+    printf("httpServerConnectionHandler status %d event %p request %p\n", status, event, request);
     assert(connection->fd < 0);
     if(request->fd >= 0) {
         int rc;
@@ -608,6 +611,7 @@ httpServerSocksHandler(int status, SocksRequestPtr request)
 {
     HTTPConnectionPtr connection = request->data;
 
+  printf("httpServerSocksHandler status %d request %p\n", status, request);
     assert(connection->fd < 0);
     if(request->fd >= 0) {
         connection->fd = request->fd;
@@ -1369,6 +1373,7 @@ httpServerReply(HTTPConnectionPtr connection, int immediate)
 {
     assert(connection->pipelined > 0);
 
+    printf("httpServerReply connection %p immediate %d\n", connection, immediate);
     if(connection->request->request == NULL) {
         do_log(L_WARN, "Aborting pipeline on %s:%d.\n",
                scrub(connection->server->name), connection->server->port);
@@ -1720,6 +1725,7 @@ httpServerHandler(int status,
     HTTPConnectionPtr connection = srequest->data;
     AtomPtr message;
     
+    printf("httpServerHandler status %d event %p srequest %p\n", status, event, srequest);
     assert(connection->request->object->flags & OBJECT_INPROGRESS);
 
     if(connection->reqlen == 0) {
@@ -1768,6 +1774,7 @@ httpServerSendRequest(HTTPConnectionPtr connection)
 {
     assert(connection->server);
 
+  printf("httpServerSendRequest %p\n", connection);
     if(connection->reqlen == 0) {
         do_log(D_SERVER_REQ, 
                "Writing aborted on 0x%lx\n", (unsigned long)connection);
@@ -1795,6 +1802,7 @@ httpServerReplyHandler(int status,
     int bufsize = 
         (connection->flags & CONN_BIGBUF) ? bigBufferSize : CHUNK_SIZE;
 
+    printf("httpServerReplyHandler status %d event %p srequest %p\n", status, event, srequest);
     assert(request->object->flags & OBJECT_INPROGRESS);
     if(status < 0) {
         if(connection->serviced >= 1) {
