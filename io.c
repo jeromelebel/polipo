@@ -23,7 +23,7 @@ THE SOFTWARE.
 #include "polipo.h"
 
 #ifdef IPROXY
-//#define IPROXY_SOCKET
+#define IPROXY_SOCKET
 void iproxyClose(int nativeSocket);
 #undef CLOSE
 #define CLOSE(x) { iproxyClose(x); printf("zob\n"); }
@@ -393,6 +393,9 @@ do_scheduled_stream(int status, FdEventHandlerPtr event)
         else
             rc = READ(request->fd, iov[0].iov_base, iov[0].iov_len);
         printf("read socket %d length %d errno %d\n", request->fd, rc, errno);
+        if (rc == 4096) {
+            printf("ok\n");
+        }
     }
 
     if(rc > 0) {
